@@ -37,6 +37,7 @@ BOOL CALLBACK DlgProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam)
 	static vector<int> aRandomNumbers;
 	TCHAR szBufferText[10];
 	//int randNumber;
+	static int iGuessedNumbers = 0;
 
 	switch (uMessage)
 	{
@@ -47,69 +48,76 @@ BOOL CALLBACK DlgProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam)
 
 	case WM_INITDIALOG:
 
-		for (int i = 0, y = IDC_BUTTON1; i < 16; i++, y++)
-		{
-
-
-			int randNumber;
-			if (!aRandomNumbers.empty())
-			{
-				do
-				{
-					randNumber = rand() % 16;
-				} while (NumberIsInTheVector(aRandomNumbers, randNumber));
-			}
-			else
-			{
-				randNumber = rand() % 16;
-			}
-
-			aRandomNumbers.push_back(randNumber);
-
-			hTempButton = GetDlgItem(hWnd, y);
-			_itot(aRandomNumbers[i], szBufferText, 10);
-			SetWindowText(hTempButton, szBufferText);
-		}
-		
-
-		SortVector(aRandomNumbers);
-		//int tmp;
-		//for (int i = 0; i < aRandomNumbers.size() - 1; i++)
-		//{
-		//	for (int j = 0; j < aRandomNumbers.size() - 1; j++)
-		//	{
-		//		if (aRandomNumbers[j + 1] < aRandomNumbers[j])
-		//		{
-		//			/*aRandomNumbers[j] = aRandomNumbers[j] + aRandomNumbers[j + 1]
-		//				- (aRandomNumbers[j + 1] = aRandomNumbers[j]);*/
-
-		//			tmp = aRandomNumbers[j + 1];
-		//			aRandomNumbers[j + 1] = aRandomNumbers[j];
-		//			aRandomNumbers[j] = tmp;
-
-		//		}
-		//	}
-		//}
-
 		hList = GetDlgItem(hWnd, IDC_LIST);
-		for (int i = 0; i < aRandomNumbers.size(); i++)
+
+		for (int i = IDC_BUTTON1; i < IDC_BUTTON16 + 1; i++)
 		{
-			//aRandomNumbers[i];
-			
-			_itot(aRandomNumbers[i], szBufferText, 10);
-			SendMessage(hList, LB_ADDSTRING, 0, (LPARAM)szBufferText);
+			// Делаем кнопки неактивными.
+			EnableWindow(GetDlgItem(hWnd, i), FALSE);
 		}
+
+		// Тестовое заполнение - проверка сортировки.
+		//for (int i = 0; i < aRandomNumbers.size(); i++)
+		//{
+		//	//aRandomNumbers[i];
+		//	
+		//	_itot(aRandomNumbers[i], szBufferText, 10);
+		//	SendMessage(hList, LB_ADDSTRING, 0, (LPARAM)szBufferText);
+		//}
 
 		return TRUE;
 
 	case WM_COMMAND:
 
+		// Новая игра.
 		if (LOWORD(wParam) == IDC_BUTTON_NewGame) {
-			//MessageBeep(2);
+
+			aRandomNumbers.clear();
+			SendMessage(hList, LB_RESETCONTENT, 0, 0);
+			iGuessedNumbers = 0;
+
+			for (int i = 0, y = IDC_BUTTON1; i < 16; i++, y++)
+			{
+				// Делаем кнопки активными.
+				EnableWindow(GetDlgItem(hWnd, y), TRUE);
+
+				int randNumber;
+				if (!aRandomNumbers.empty())
+				{
+					do
+					{
+						randNumber = rand() % 16;
+					} while (NumberIsInTheVector(aRandomNumbers, randNumber));
+				}
+				else
+				{
+					randNumber = rand() % 16;
+				}
+
+				aRandomNumbers.push_back(randNumber);
+
+				hTempButton = GetDlgItem(hWnd, y);
+				_itot(aRandomNumbers[i], szBufferText, 10);
+				SetWindowText(hTempButton, szBufferText);
+			}
+
+
+			SortVector(aRandomNumbers);
 		}
+		// Нажатие на кнопки с числами.
 		else if (LOWORD(wParam) >= IDC_BUTTON1 && LOWORD(wParam) <= IDC_BUTTON16)
 		{
-			MessageBeep(2);
+			hTempButton = GetDlgItem(hWnd, LOWORD(wParam));
+			GetWindowText(hTempButton, szBufferText, 10);
+			if (_wtoi(szBufferText) == aRandomNumbers[iGuessedNumbers])
+			{
+				SendMessage(hList, LB_ADDSTRING, 0, (LPARAM)szBufferText);
+				iGuessedNumbers++;
+				EnableWindow(GetDlgItem(hWnd, LOWORD(wParam)), FALSE);
+			}
+
+			// TODO если все отгадано
+			// если все выкл
 		}
 
 		return TRUE;
