@@ -10,7 +10,7 @@ using namespace std;
 
 #define NUMBER_OF_BUTTONS 16
 #define SECONDS_TO_PLAY_AT_STARTUP 30
-#define RANGE_OF_NUMBERS_STOP 16
+#define RANGE_OF_NUMBERS_STOP 100
 
 HWND hTempButton;
 HWND hList, hProgress, hSpin;
