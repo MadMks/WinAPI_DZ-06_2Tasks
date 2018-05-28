@@ -8,8 +8,12 @@ using namespace std;
 
 #pragma comment(lib, "comctl32")
 
+#define NUMBER_OF_BUTTONS 16
+#define SECONDS_TO_PLAY_AT_STARTUP 30
+#define RANGE_OF_NUMBERS_STOP 16
+
 HWND hTempButton;
-HWND hList, hProgress;
+HWND hList, hProgress, hSpin;
 
 BOOL CALLBACK DlgProc(HWND, UINT, WPARAM, LPARAM);
 
@@ -39,11 +43,10 @@ BOOL CALLBACK DlgProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam)
 {
 	static vector<int> aRandomNumbers;
 	TCHAR szBufferText[10];
-	//int randNumber;
-	static int iGuessedNumbers = 0;
+	static int iGuessedNumbers = 0;	// отгадано чисел.
 
-	//static time_t tTime;	// время.
-	static int nTime;
+	static int nCurrentTimeSeconds;	// текущее значение секунд игры.
+	static int nTimePlay;	// время игры (секунд).
 
 	switch (uMessage)
 	{
@@ -56,6 +59,7 @@ BOOL CALLBACK DlgProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam)
 
 		hList = GetDlgItem(hWnd, IDC_LIST);
 		hProgress = GetDlgItem(hWnd, IDC_PROGRESS);
+		hSpin = GetDlgItem(hWnd, IDC_SPIN);
 
 		for (int i = IDC_BUTTON1; i < IDC_BUTTON16 + 1; i++)
 		{
@@ -63,22 +67,16 @@ BOOL CALLBACK DlgProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam)
 			EnableWindow(GetDlgItem(hWnd, i), FALSE);
 		}
 
-		// Тестовое заполнение - проверка сортировки.
-		//for (int i = 0; i < aRandomNumbers.size(); i++)
-		//{
-		//	//aRandomNumbers[i];
-		//	
-		//	_itot(aRandomNumbers[i], szBufferText, 10);
-		//	SendMessage(hList, LB_ADDSTRING, 0, (LPARAM)szBufferText);
-		//}
+		// Установка секунд по умолчанию, при старте игры.
+		SendMessage(hSpin, UDM_SETPOS32, 0, SECONDS_TO_PLAY_AT_STARTUP);
 
 		return TRUE;
 
 	case WM_TIMER:
-		//tTime = time(NULL);
-		nTime++;
 
-		if (nTime < 60) // TODO переменная
+		nCurrentTimeSeconds++;
+
+		if (nCurrentTimeSeconds <= nTimePlay)
 		{
 			SendMessage(hProgress, PBM_STEPIT, 0, 0);
 		}
@@ -86,7 +84,13 @@ BOOL CALLBACK DlgProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam)
 		{
 			// Время вышло.
 			KillTimer(hWnd, 1);
-			MessageBeep(1);
+			MessageBox(hWnd, L"Вы не успели!", L"Время вышло", MB_OK | MB_ICONASTERISK);
+
+			for (int i = IDC_BUTTON1; i < IDC_BUTTON16 + 1; i++)
+			{
+				// Делаем кнопки неактивными.
+				EnableWindow(GetDlgItem(hWnd, i), FALSE);
+			}
 		}
 
 		return TRUE;
@@ -100,7 +104,7 @@ BOOL CALLBACK DlgProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam)
 			SendMessage(hList, LB_RESETCONTENT, 0, 0);
 			iGuessedNumbers = 0;
 
-			for (int i = 0, y = IDC_BUTTON1; i < 16; i++, y++)
+			for (int i = 0, y = IDC_BUTTON1; i < NUMBER_OF_BUTTONS; i++, y++)
 			{
 				// Делаем кнопки активными.
 				EnableWindow(GetDlgItem(hWnd, y), TRUE);
@@ -110,12 +114,12 @@ BOOL CALLBACK DlgProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam)
 				{
 					do
 					{
-						randNumber = rand() % 16;
+						randNumber = rand() % RANGE_OF_NUMBERS_STOP;
 					} while (NumberIsInTheVector(aRandomNumbers, randNumber));
 				}
 				else
 				{
-					randNumber = rand() % 16;
+					randNumber = rand() % RANGE_OF_NUMBERS_STOP;
 				}
 
 				aRandomNumbers.push_back(randNumber);
@@ -128,18 +132,19 @@ BOOL CALLBACK DlgProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam)
 			SortVector(aRandomNumbers);
 
 
-			//// TEST
+			nTimePlay = SendMessage(hSpin, UDM_GETPOS32, 0, 0);
+
 			//Установка интервала для индикатора
-			SendMessage(hProgress, PBM_SETRANGE, 0, MAKELPARAM(0, 60));
+			SendMessage(hProgress, PBM_SETRANGE, 0, MAKELPARAM(0, nTimePlay));
 			//Установка шага приращения индикатора
 			SendMessage(hProgress, PBM_SETSTEP, 1, 0);
 			//Установка текущей позиции индикатора
 			SendMessage(hProgress, PBM_SETPOS, 0, 0);
-			//SetTimer(hWnd, 1, 100, NULL);
 
 			// Установка таймера.
 			SetTimer(hWnd, 1, 1000, NULL);
-			nTime = 0;
+			nCurrentTimeSeconds = 0;
+
 		}
 		// Нажатие на кнопки с числами.
 		else if (LOWORD(wParam) >= IDC_BUTTON1 && LOWORD(wParam) <= IDC_BUTTON16)
@@ -153,9 +158,10 @@ BOOL CALLBACK DlgProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam)
 				EnableWindow(GetDlgItem(hWnd, LOWORD(wParam)), FALSE);
 			}
 
-			if (iGuessedNumbers == 15)
+			if (iGuessedNumbers == NUMBER_OF_BUTTONS)
 			{
 				KillTimer(hWnd, 1);
+				MessageBox(hWnd, L"Вы выиграли!", L"Поздравляем", MB_OK | MB_ICONINFORMATION);
 			}
 		}
 
@@ -185,7 +191,6 @@ void SortVector(vector<int> &aNumbers) {
 		{
 			if (aNumbers[j + 1] < aNumbers[j])
 			{
-				//aNumbers[j] = aNumbers[j] + aNumbers[j + 1] - (aNumbers[j + 1] = aNumbers[j]);
 				temp = aNumbers[j + 1];
 				aNumbers[j + 1] = aNumbers[j];
 				aNumbers[j] = temp;
