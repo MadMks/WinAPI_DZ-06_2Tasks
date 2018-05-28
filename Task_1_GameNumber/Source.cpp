@@ -3,10 +3,13 @@
 #include "resource.h"
 #include <vector>
 #include <time.h>
+#include <commctrl.h>
 using namespace std;
 
+#pragma comment(lib, "comctl32")
+
 HWND hTempButton;
-HWND hList;
+HWND hList, hProgress;
 
 BOOL CALLBACK DlgProc(HWND, UINT, WPARAM, LPARAM);
 
@@ -39,6 +42,9 @@ BOOL CALLBACK DlgProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam)
 	//int randNumber;
 	static int iGuessedNumbers = 0;
 
+	//static time_t tTime;	// время.
+	static int nTime;
+
 	switch (uMessage)
 	{
 	case WM_CLOSE:
@@ -49,6 +55,7 @@ BOOL CALLBACK DlgProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam)
 	case WM_INITDIALOG:
 
 		hList = GetDlgItem(hWnd, IDC_LIST);
+		hProgress = GetDlgItem(hWnd, IDC_PROGRESS);
 
 		for (int i = IDC_BUTTON1; i < IDC_BUTTON16 + 1; i++)
 		{
@@ -64,6 +71,23 @@ BOOL CALLBACK DlgProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam)
 		//	_itot(aRandomNumbers[i], szBufferText, 10);
 		//	SendMessage(hList, LB_ADDSTRING, 0, (LPARAM)szBufferText);
 		//}
+
+		return TRUE;
+
+	case WM_TIMER:
+		//tTime = time(NULL);
+		nTime++;
+
+		if (nTime < 60) // TODO переменная
+		{
+			SendMessage(hProgress, PBM_STEPIT, 0, 0);
+		}
+		else
+		{
+			// Время вышло.
+			KillTimer(hWnd, 1);
+			MessageBeep(1);
+		}
 
 		return TRUE;
 
@@ -101,8 +125,21 @@ BOOL CALLBACK DlgProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam)
 				SetWindowText(hTempButton, szBufferText);
 			}
 
-
 			SortVector(aRandomNumbers);
+
+
+			//// TEST
+			//Установка интервала для индикатора
+			SendMessage(hProgress, PBM_SETRANGE, 0, MAKELPARAM(0, 60));
+			//Установка шага приращения индикатора
+			SendMessage(hProgress, PBM_SETSTEP, 1, 0);
+			//Установка текущей позиции индикатора
+			SendMessage(hProgress, PBM_SETPOS, 0, 0);
+			//SetTimer(hWnd, 1, 100, NULL);
+
+			// Установка таймера.
+			SetTimer(hWnd, 1, 1000, NULL);
+			nTime = 0;
 		}
 		// Нажатие на кнопки с числами.
 		else if (LOWORD(wParam) >= IDC_BUTTON1 && LOWORD(wParam) <= IDC_BUTTON16)
@@ -116,8 +153,10 @@ BOOL CALLBACK DlgProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam)
 				EnableWindow(GetDlgItem(hWnd, LOWORD(wParam)), FALSE);
 			}
 
-			// TODO если все отгадано
-			// если все выкл
+			if (iGuessedNumbers == 15)
+			{
+				KillTimer(hWnd, 1);
+			}
 		}
 
 		return TRUE;
