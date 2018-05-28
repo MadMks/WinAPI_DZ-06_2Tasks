@@ -6,10 +6,12 @@
 using namespace std;
 
 HWND hTempButton;
+HWND hList;
 
 BOOL CALLBACK DlgProc(HWND, UINT, WPARAM, LPARAM);
 
 bool NumberIsInTheVector(vector<int> aRandNumbs, int randNumb);
+void SortVector(vector<int> &aNumbers);
 
 int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrev, LPSTR lpszCmdLine, int nCmdShow)
 {
@@ -68,20 +70,47 @@ BOOL CALLBACK DlgProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam)
 			_itot(aRandomNumbers[i], szBufferText, 10);
 			SetWindowText(hTempButton, szBufferText);
 		}
-		/*for (int i = IDC_BUTTON1; i <= IDC_BUTTON16; i++)
+		
+
+		SortVector(aRandomNumbers);
+		//int tmp;
+		//for (int i = 0; i < aRandomNumbers.size() - 1; i++)
+		//{
+		//	for (int j = 0; j < aRandomNumbers.size() - 1; j++)
+		//	{
+		//		if (aRandomNumbers[j + 1] < aRandomNumbers[j])
+		//		{
+		//			/*aRandomNumbers[j] = aRandomNumbers[j] + aRandomNumbers[j + 1]
+		//				- (aRandomNumbers[j + 1] = aRandomNumbers[j]);*/
+
+		//			tmp = aRandomNumbers[j + 1];
+		//			aRandomNumbers[j + 1] = aRandomNumbers[j];
+		//			aRandomNumbers[j] = tmp;
+
+		//		}
+		//	}
+		//}
+
+		hList = GetDlgItem(hWnd, IDC_LIST);
+		for (int i = 0; i < aRandomNumbers.size(); i++)
 		{
-			hTempButton = GetDlgItem(hWnd, i);
-			_itot(aRandomNumbers[])
-			SetWindowText(hTempButton, )
-		}*/
+			//aRandomNumbers[i];
+			
+			_itot(aRandomNumbers[i], szBufferText, 10);
+			SendMessage(hList, LB_ADDSTRING, 0, (LPARAM)szBufferText);
+		}
 
 		return TRUE;
 
 	case WM_COMMAND:
 
-		/*if (LOWORD(wParam) == IDC_BUTTON_Create) {
-
-		}*/
+		if (LOWORD(wParam) == IDC_BUTTON_NewGame) {
+			//MessageBeep(2);
+		}
+		else if (LOWORD(wParam) >= IDC_BUTTON1 && LOWORD(wParam) <= IDC_BUTTON16)
+		{
+			MessageBeep(2);
+		}
 
 		return TRUE;
 
@@ -99,4 +128,21 @@ bool NumberIsInTheVector(vector<int> aRandNumbs, int randNumb) {
 		}
 	}
 	return FALSE;
+}
+
+void SortVector(vector<int> &aNumbers) {
+	int temp;
+	for (int i = 0; i < aNumbers.size() - 1; i++)
+	{
+		for (int j = 0; j < aNumbers.size() - 1; j++)
+		{
+			if (aNumbers[j + 1] < aNumbers[j])
+			{
+				//aNumbers[j] = aNumbers[j] + aNumbers[j + 1] - (aNumbers[j + 1] = aNumbers[j]);
+				temp = aNumbers[j + 1];
+				aNumbers[j + 1] = aNumbers[j];
+				aNumbers[j] = temp;
+			}
+		}
+	}
 }
