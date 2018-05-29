@@ -37,7 +37,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrev, LPSTR lpszCmdLine, int nCmd
 
 BOOL CALLBACK DlgProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam)
 {
-	TCHAR szCaption[25];
+	TCHAR szCaption[35];
 	TCHAR szRedBuffer[4];
 	TCHAR szGreenBuffer[4];
 	TCHAR szBlueBuffer[4];
@@ -60,6 +60,16 @@ BOOL CALLBACK DlgProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam)
 		SendMessage(hGreenSlider, TBM_SETRANGE, TRUE, MAKELPARAM(MIN, MAX));
 		SendMessage(hBlueSlider, TBM_SETRANGE, TRUE, MAKELPARAM(MIN, MAX));
 
+		SendMessage(hRedSlider, TBM_SETPOS, 1, 153);
+		SendMessage(hGreenSlider, TBM_SETPOS, 1, 255);
+		SendMessage(hBlueSlider, TBM_SETPOS, 1, 204);
+
+		SendMessage(hProgress, PBM_SETBKCOLOR, 0, LPARAM(RGB(
+			SendMessage(hRedSlider, TBM_GETPOS, 0, 0),
+			SendMessage(hGreenSlider, TBM_GETPOS, 0, 0),
+			SendMessage(hBlueSlider, TBM_GETPOS, 0, 0)
+		)));
+
 		return TRUE;
 
 	case WM_HSCROLL:
@@ -71,7 +81,8 @@ BOOL CALLBACK DlgProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam)
 			|| LPARAM(wParam) == TB_LINEUP
 			|| LPARAM(wParam) == TB_LINEDOWN
 			|| LPARAM(wParam) == TB_TOP
-			|| LPARAM(wParam) == TB_BOTTOM)
+			|| LPARAM(wParam) == TB_BOTTOM
+			|| LPARAM(wParam) == TB_ENDTRACK)
 		{
 			SendMessage(hProgress, PBM_SETBKCOLOR, 0, LPARAM(RGB(
 				SendMessage(hRedSlider, TBM_GETPOS, 0, 0),
@@ -79,31 +90,21 @@ BOOL CALLBACK DlgProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam)
 				SendMessage(hBlueSlider, TBM_GETPOS, 0, 0)
 			)));
 
-			/*MessageBeep(1);
-			MessageBeep(1);*/
+			szCaption[0] = 0;
+
 			_itot(SendMessage(hRedSlider, TBM_GETPOS, 0, 0), szRedBuffer, 10);
 			_itot(SendMessage(hGreenSlider, TBM_GETPOS, 0, 0), szGreenBuffer, 10);
 			_itot(SendMessage(hBlueSlider, TBM_GETPOS, 0, 0), szBlueBuffer, 10);
+			lstrcat(szCaption, L"Red: ");
 			lstrcat(szCaption, szRedBuffer);
+			lstrcat(szCaption, L"  Green: ");
 			lstrcat(szCaption, szGreenBuffer);
+			lstrcat(szCaption, L"  Blue: ");
 			lstrcat(szCaption, szBlueBuffer);
 			SetWindowText(hWnd, szCaption);
 		}
 
 		return TRUE;
-
-	/*case TB_THUMBTRACK:
-
-		SendMessage(hProgress, PBM_SETBKCOLOR, 0, LPARAM(RGB(
-			SendMessage(hRedSlider, TBM_GETPOS, 0, 0),
-			SendMessage(hGreenSlider, TBM_GETPOS, 0, 0),
-			SendMessage(hBlueSlider, TBM_GETPOS, 0, 0)
-		)));
-
-		MessageBeep(1);
-
-		return TRUE;*/
-
 
 	}
 	return FALSE;
